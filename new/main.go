@@ -15,9 +15,6 @@ import (
 )
 
 func main() {
-	// Users and Merchants
-	var newUser user.User
-	var newMerchant merchant.Merchant
 
 	// New subcommands or flags
 	userCmd := flag.NewFlagSet("user", flag.ContinueOnError)
@@ -44,6 +41,7 @@ func main() {
 	case "user":
 		if err := userCmd.Parse(os.Args[2:]); err == nil {
 			if *userID != "" {
+				var newUser user.User
 				emailCheck := isEmailValid(*email)
 				if !emailCheck {
 					fmt.Printf("%s - Not a valid email address.", *email)
@@ -66,6 +64,7 @@ func main() {
 	case "merchant":
 		if err := merchantCmd.Parse(os.Args[2:]); err == nil {
 			if *merchantID != "" {
+				var newMerchant merchant.Merchant
 				newMerchant.MerchantID = *merchantID
 
 				emailCheck := isEmailValid(*mEmail)
