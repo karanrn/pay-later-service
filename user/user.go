@@ -10,8 +10,8 @@ import (
 type User struct {
 	UserID      string
 	EmailID     string
-	CreditLimit int64
-	CreditSpent int64
+	CreditLimit float64
+	CreditSpent float64
 	Limit       bool
 }
 
@@ -32,6 +32,10 @@ func Search(userID string) (user User, err error) {
 			return User{}, errors.New(err.Error())
 		}
 	}
+	if (user == User{}) {
+		return User{}, errors.New("User not found")
+	}
+
 	return user, nil
 }
 
@@ -52,27 +56,21 @@ func Add(user User) (err error) {
 	return nil
 }
 
-// Payback updates creditSpent for the user
-func Payback(userID string, paybackAmt int64) (err error) {
+// CreditUpdate updates creditSpent for the user
+func CreditUpdate(user User, amt float64, payback bool) (err error) {
 	db := db.Connect()
 	defer db.Close()
 
-	selectStmt, err := db.Query("SELECT user_id, email_id, credit_limit, credit_spent, limit_reached FROM user WHERE user_id=?", userID)
-	if err != nil {
-		return errors.New(err.Error())
+	// Accept and update user's payback or transaxtion amount
+	var creditUsed float64
+	if payback {
+		// Payback
+		creditUsed = user.CreditSpent - amt
+	} else {
+		// Transaction, credits used
+		creditUsed = user.CreditSpent + amt
 	}
-
-	user := User{}
-	for selectStmt.Next() {
-		err = selectStmt.Scan(&user.UserID, &user.EmailID, &user.CreditLimit, &user.CreditSpent, &user.Limit)
-		if err != nil {
-			return errors.New(err.Error())
-		}
-	}
-
-	// Accept and update user's payback
-	payback := user.CreditSpent - paybackAmt
-	_, err = db.Query("UPDATE user SET credit_spent = ? WHERE user_id = ?", payback, user.UserID)
+	_, err = db.Query("UPDATE user SET credit_spent = ? WHERE user_id = ?", creditUsed, user.UserID)
 	if err != nil {
 		return errors.New(err.Error())
 	}

@@ -23,7 +23,7 @@ func main() {
 	userCmd := flag.NewFlagSet("user", flag.ContinueOnError)
 	userID := userCmd.String("id", "", "User ID: alphanumeric value. ex: -user user101")
 	email := userCmd.String("email", "", "Email ID of user: xyz@domain.com. ex: -email abc@xyz.com")
-	creditLimit := userCmd.Int64("credit-limit", 0, "Credit limit for the user, default is 0. ex: -credit-limit 1000")
+	creditLimit := userCmd.Float64("credit-limit", 0.0, "Credit limit for the user, default is 0. ex: -credit-limit 1000")
 
 	merchantCmd := flag.NewFlagSet("merchant", flag.ContinueOnError)
 	merchantID := merchantCmd.String("id", "", "Merchant ID: alphanumeric value. ex: -merchant m101")
@@ -33,7 +33,7 @@ func main() {
 	txn := flag.NewFlagSet("txn", flag.ContinueOnError)
 	tUser := txn.String("user-id", "", "User involved in transaction. ex: -user-id user101")
 	tMerchant := txn.String("merchant-id", "", "Merchant involved in transaction. ex: -merchant-id m101")
-	tAmt := txn.Int64("amt", 0, "Transaction amount. ex: -amt 100")
+	tAmt := txn.Float64("amt", 0.0, "Transaction amount. ex: -amt 100")
 
 	if len(os.Args[1:]) < 1 {
 		fmt.Println("You must pass sub command - [user, merchant, txn]")
@@ -75,9 +75,10 @@ func main() {
 				}
 				newMerchant.EmailID = *mEmail
 
-				disAmt, err := strconv.ParseInt(strings.TrimRight(*discount, "%"), 10, 64)
+				disAmt, err := strconv.ParseFloat(strings.TrimRight(*discount, "%"), 64)
 				if err != nil {
 					fmt.Printf("%s - Invalid discount type. Should of format 10%%", *discount)
+					return
 				}
 				newMerchant.Discount = disAmt
 
@@ -90,8 +91,29 @@ func main() {
 	case "txn":
 		if err := txn.Parse(os.Args[2:]); err == nil {
 			if *tUser != "" && *tMerchant != "" {
-				// TO DO - implement transaction logic
-				fmt.Printf("Transaction amount: %d", *tAmt)
+				txnMerchant, err := merchant.Search(*tMerchant)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+
+				txnUser, err := user.Search(*tUser)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+
+				if *tAmt > txnUser.CreditLimit || (txnUser.CreditSpent+*tAmt) > txnUser.CreditLimit {
+					fmt.Println("Rejected! (reason: creditLimit)")
+					return
+				}
+
+				discountedAmt := *tAmt * (1 - (txnMerchant.Discount / 100))
+				// Update the user credits spent
+				err = user.CreditUpdate(txnUser, discountedAmt, false)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
 			}
 		}
 	}

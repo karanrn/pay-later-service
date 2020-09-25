@@ -10,7 +10,7 @@ import (
 type Merchant struct {
 	MerchantID string
 	EmailID    string
-	Discount   int64
+	Discount   float64
 }
 
 // Search searches merchant basis merchantID
@@ -29,6 +29,9 @@ func Search(merchantID string) (merchant Merchant, err error) {
 		if err != nil {
 			return Merchant{}, errors.New(err.Error())
 		}
+	}
+	if (merchant == Merchant{}) {
+		return Merchant{}, errors.New("merchant not found")
 	}
 	return merchant, nil
 }
@@ -50,7 +53,7 @@ func Add(merchant Merchant) (err error) {
 }
 
 // UpdateDiscount updates discount offer of the merchant
-func UpdateDiscount(merchantID string, newDiscount int64) (err error) {
+func UpdateDiscount(merchantID string, newDiscount float64) (err error) {
 	db := db.Connect()
 	defer db.Close()
 
