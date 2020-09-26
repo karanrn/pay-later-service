@@ -37,6 +37,7 @@ func main() {
 				fmt.Println("merchant ID needs to be supplied.")
 			}
 		}
+
 	case "dues":
 		if err := dues.Parse(os.Args[2:]); err == nil {
 			if *userID != "" {
@@ -49,6 +50,29 @@ func main() {
 			} else {
 				fmt.Println("user ID needs to be supplied.")
 			}
+		}
+
+	case "total-dues":
+		users, err := user.ListUsers(false)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		totalDue := 0.0
+		for _, usr := range users {
+			fmt.Printf("%s: %.2f\n", usr.UserID, usr.CreditSpent)
+			totalDue += usr.CreditSpent
+		}
+		fmt.Printf("Total dues: %.2f \n", totalDue)
+
+	case "users-at-credit-limit":
+		users, err := user.ListUsers(true) // Get all users at credit limit
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		for _, usr := range users {
+			fmt.Printf("%s\n", usr.UserID)
 		}
 	}
 }

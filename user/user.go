@@ -1,6 +1,7 @@
 package user
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/karanrn/pay-later-service/db"
@@ -76,4 +77,40 @@ func CreditUpdate(user User, amt float64, payback bool) (err error) {
 	}
 
 	return nil
+}
+
+// ListUsers lists all the users from the system
+// atCreditLimit = true will get all users that have thier credit limit reached
+func ListUsers(atCreditLimit bool) (users []User, err error) {
+	db := db.Connect()
+	defer db.Close()
+
+	var selectStmt *sql.Rows
+	if atCreditLimit {
+		selectStmt, err = db.Query("SELECT user_id FROM user WHERE credit_limit = credit_spent ORDER BY user_id;")
+		if err != nil {
+			return []User{}, errors.New(err.Error())
+		}
+	} else {
+		// Get all users
+		selectStmt, err = db.Query("SELECT user_id, email_id, credit_limit, credit_spent, limit_reached FROM user ORDER BY user_id;")
+		if err != nil {
+			return []User{}, errors.New(err.Error())
+		}
+	}
+
+	users = []User{}
+	for selectStmt.Next() {
+		user := User{}
+		err = selectStmt.Scan(&user.UserID, &user.EmailID, &user.CreditLimit, &user.CreditSpent, &user.Limit)
+		if err != nil {
+			return []User{}, errors.New(err.Error())
+		}
+		users = append(users, user)
+	}
+	if len(users) == 0 {
+		return []User{}, errors.New("No users in the system")
+	}
+
+	return users, nil
 }
