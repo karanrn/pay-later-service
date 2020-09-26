@@ -58,7 +58,10 @@ func main() {
 				err := user.Add(newUser)
 				if err != nil {
 					fmt.Println(err.Error())
+					return
 				}
+
+				fmt.Printf("%s (%.2f)\n", *userID, *creditLimit)
 			}
 		}
 	case "merchant":
@@ -84,7 +87,10 @@ func main() {
 				err = merchant.Add(newMerchant)
 				if err != nil {
 					fmt.Println(err.Error())
+					return
 				}
+
+				fmt.Printf("%s (%s)\n", *merchantID, *discount)
 			}
 		}
 	case "txn":
@@ -112,7 +118,14 @@ func main() {
 				err = user.CreditUpdate(txnUser, discountedAmt, false)
 				if err != nil {
 					fmt.Println(err.Error())
+					return
 				}
+				err = merchant.TxnUpdate(txnMerchant)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Println("success!")
 			}
 		}
 	}

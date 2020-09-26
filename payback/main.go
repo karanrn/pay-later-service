@@ -25,7 +25,10 @@ func main() {
 		err = user.CreditUpdate(pbUser, *pAmt, true)
 		if err != nil {
 			fmt.Println(err.Error())
+			return
 		}
+
+		fmt.Printf("%s (dues: %.2f)\n", *pUser, (pbUser.CreditSpent - *pAmt))
 	} else {
 		fmt.Println("Both User and payback Amount should be supplied.\nRun payback -h")
 	}

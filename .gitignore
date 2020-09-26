@@ -15,3 +15,9 @@
 # vendor/
 mysql/
 reference.txt
+
+# Executables
+new/new
+report/report
+update/update
+payback/payback
